@@ -2,8 +2,8 @@
 
 data="data"
 model="model"
-inmax=350
-outmax=50
+inmax=100
+outmax=100
 BS=128
 
 mkdir $model

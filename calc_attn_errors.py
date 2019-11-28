@@ -152,8 +152,7 @@ def calc_attn_errors(data):
             repeat_error_scores[-1] /= source.count(source[j])
 
         errors.append((np.sum(copy_error_scores), np.sum(repeat_error_scores)))
-        print("Copy error:", errors[-1][0])
-        print("Repeat error:", errors[-1][0])
+        print("Copy error:\t%.4f\nRepeat error:\t%.4f\n" % errors[-1])
 
     return errors
 
