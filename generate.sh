@@ -2,7 +2,7 @@ outmax=100
 BEST=trained_model.pt
 BS=128
 ALPHA=1.8
-BS=32
+
 # Manual test original entities with varying seed
 for i in 1 2 3 4 5; do
   length=$(echo "long long medium medium short"|cut -d" " -f$i)
