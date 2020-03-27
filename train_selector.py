@@ -22,14 +22,37 @@ def get_example(event):
     return x, severity
 
 
+def get_example2(event):
+    y0 = float(event['fact'])
+    y1 = float(event['form'])
+    x = []
+    #x.append(float(event['min_length']))
+    x = [1. if row['type'] == t else 0. for t in ['result', 'goal', 'penalty', 'save']]
+    #x.append({'short': 1., 'medium': 2., 'long': 3.}[row['length']])
+    x.append(float(event['prob']))
+    x.append(float(event['ambiguity']))
+    x.append(float(event['repetition']))
+    #for feat1 in ['prob', 'ambiguity', 'repetition']:
+    #    for feat2 in ['prob', 'ambiguity', 'repetition']:
+    #        x.append(float(event[feat1])*float(event[feat2]))
+    return x, (y0, y1)
+
+
 def append_examples(game, X, y):
     for i, event in enumerate(game):
         x, y_ = get_example(event)
         y.append(y_)
         X.append(x)
 
+def append_examples2(game, X, y0, y1):
+    for i, event in enumerate(game):
+        x, (y0_, y1_) = get_example2(event)
+        y0.append(y0_)
+        y1.append(y1_)
+        X.append(x)
 
 X, y = [], []
+y0, y1 = [], []
 with open("candidate_eval_.csv") as csvfile:
     game = []
     game_id = None
@@ -39,11 +62,13 @@ with open("candidate_eval_.csv") as csvfile:
         elif game_id == row['id']:
             game.append(row)
         else:
-            append_examples(game, X, y)
+            #append_examples(game, X, y)
+            append_examples2(game, X, y0, y1)
             game = [row]
             game_id = row['id']
     else:
-        append_examples(game, X, y)
+        #append_examples(game, X, y)
+        append_examples2(game, X, y0, y1)
 
 
 """        y_fact.append(float(row['fact']))
@@ -57,7 +82,10 @@ with open("candidate_eval_.csv") as csvfile:
         x.append(float(len(row['text'].split())))
         X.append(x)"""
 
-X, y = np.array(X), to_categorical(np.array(y))
+X = np.array(X)
+#y = to_categorical(np.array(y))
+y0 = to_categorical(np.array(y0))
+y1 = to_categorical(np.array(y1))
 #X, y = np.array(X), np.array(y)
 
 #clf = LogisticRegression(random_state=0).fit(X, y_sign)
@@ -66,17 +94,24 @@ fact_error_rates = []
 form_error_rates = []
 
 for exp in range(10):
-
+    print("Experiment", exp)
     input = Input(shape=(X.shape[1],))
     #hidden = Dense(3, activation='tanh')(input)
     output = Dense(4, activation='softmax')(input)
     #output = Dense(1, activation='sigmoid')(input)
+    output0 = Dense(2, activation='softmax')(input)
+    output1 = Dense(2, activation='softmax')(input)
+
+    # Predict error severity level 0-3
     model = Model(inputs=input, outputs=output)
+    # Predict errors (fact and form)
+    model2 = Model(inputs=input, outputs=[output0,output1])
 
     #model.compile(optimizer=Adam(lr=0.001), loss='mean_absolute_error', metrics=['accuracy'])
     model.compile(optimizer='sgd', loss='categorical_crossentropy', metrics=['accuracy'])
-    hist = model.fit(X, y, batch_size=1, verbose=1, epochs=20)
-
+    model2.compile(optimizer='sgd', loss='categorical_crossentropy', loss_weights=[1., 1.], metrics=['accuracy'])
+    #hist = model.fit(X, y, batch_size=1, verbose=1, epochs=20)
+    hist2 = model2.fit(X, [y0,y1], batch_size=1, verbose=1, epochs=10)
 
     top_fact_errors = 0
     top_form_errors = 0
@@ -98,6 +133,11 @@ for exp in range(10):
                     x, _ = get_example(event)
 
                     severity = sum(model.predict(np.array(x).reshape(1,-1))[0]*np.array([0,1,2,3]))
+                    #events.append((severity, event))
+                    pred_fact = model2.predict(np.array(x).reshape(1,-1))[0][0][1]
+                    pred_form = model2.predict(np.array(x).reshape(1,-1))[1][0][1]
+                    severity = (1-pred_fact)*2+(1-pred_form)
+
                     events.append((severity, event))
                 first = True
                 for severity, event in sorted(events, key=lambda x:x[0]):
