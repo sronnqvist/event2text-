@@ -53,7 +53,7 @@ def append_examples2(game, X, y0, y1):
 
 X, y = [], []
 y0, y1 = [], []
-with open("candidate_eval_.csv") as csvfile:
+with open("candidate_eval__.csv") as csvfile:
     game = []
     game_id = None
     for row in csv.DictReader(csvfile):
@@ -93,7 +93,7 @@ y1 = to_categorical(np.array(y1))
 fact_error_rates = []
 form_error_rates = []
 
-for exp in range(10):
+for exp in range(1):
     print("Experiment", exp)
     input = Input(shape=(X.shape[1],))
     #hidden = Dense(3, activation='tanh')(input)
@@ -118,8 +118,10 @@ for exp in range(10):
     all_fact_errors = 0
     all_form_errors = 0
     event_count = 0
+    sort_baseline_top_fact = 0
+    sort_baseline_top_form = 0
 
-    with open("candidate_eval_.csv") as csvfile:
+    with open("candidate_eval__.csv") as csvfile:
         game = []
         game_id = None
         for row in csv.DictReader(csvfile):
@@ -165,6 +167,12 @@ for exp in range(10):
                         else:
                             correct += 0
                     """
+                first = True
+                for event in sorted(game, key=lambda x:(float(x['ambiguity']),float(x['repetition']),-float(x['prob']))):
+                    if first:
+                        sort_baseline_top_fact += 1-int(event['fact'])
+                        sort_baseline_top_form += 1-int(event['form'])
+                        first = False
                 print()
                 game = [row]
                 game_id = row['id']
@@ -182,3 +190,5 @@ for exp in range(10):
 #print("in3+type,ep20,bs1")
 print("Mean top fact error rate", np.mean(fact_error_rates))
 print("Mean top form error rate", np.mean(form_error_rates))
+print("Sort baseline top fact error rate: %.4f" % (sort_baseline_top_fact/event_count))
+print("Sort baseline top form error rate: %.4f" % (sort_baseline_top_form/event_count))
