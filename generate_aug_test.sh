@@ -27,6 +27,9 @@ paste -d "\n" tmp/scoring_*.*.txt > devel_all_generations.txt
 #|python select_generation.py > test_manual_generation.txt
 #paste -d "\n" data/test_manual_long.input test_manual_generation.txt /dev/null
 
+# Get examples for evaluation
+#paste -d "\n" data/devel.input tmp/scoring_*.*.txt|tail -n +210|head -210
+
 #> all_preds_scored.txt
 #"for i in 1 2 3 4 5; do
 #  length=$(echo "long long medium medium short"|cut -d" " -f$i)
