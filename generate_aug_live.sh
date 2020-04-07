@@ -11,7 +11,8 @@ ALPHA=1.6
 SESSION_DIR=$(echo $TMP/tmp.$SESSION)
 
 generate(){
-  python OpenNMT-py/translate.py -seed $3 -gpu 0 -model $BEST -src $TMP/$INPUT.pcs -output $SESSION_DIR/test_pred_$2.$3.txt -replace_unk -max_length $outmax -batch_size $BS -min_length $2 -length_penalty wu -alpha $ALPHA -verbose -attn_debug -beam_size 15 > $SESSION_DIR/trans.output.$2.$3
+  #python OpenNMT-py/translate.py -seed $3 -gpu 0 -model $BEST -src $TMP/$INPUT.pcs -output $SESSION_DIR/test_pred_$2.$3.txt -replace_unk -max_length $outmax -batch_size $BS -min_length $2 -length_penalty wu -alpha $ALPHA -verbose -attn_debug -beam_size 15 > $SESSION_DIR/trans.output.$2.$3
+  python OpenNMT-py/translate.py -seed $3 -model $BEST -src $TMP/$INPUT.pcs -output $SESSION_DIR/test_pred_$2.$3.txt -replace_unk -max_length $outmax -batch_size $BS -min_length $2 -length_penalty wu -alpha $ALPHA -verbose -attn_debug -beam_size 15 > $SESSION_DIR/trans.output.$2.$3
   python calc_attn_errors.py -i $SESSION_DIR/trans.output.$2.$3 -o $SESSION_DIR/scoring_$2.$3.txt
   grep -n "" $SESSION_DIR/scoring_$2.$3.txt |sed -E "s/(^[0-9]+):/\1\t/g" |while read LINE;do echo -e "$1\t$2\t$LINE";done > $SESSION_DIR/scoring_$2.$3.txt_
   mv $SESSION_DIR/scoring_$2.$3.txt_ $SESSION_DIR/scoring_$2.$3.txt
@@ -34,5 +35,5 @@ done
 wait
 # Join candidates and select; detokenize
 echo "Writing final generation to $TMP/$OUTPUT"
-paste -d "\n" $SESSION_DIR/scoring_*.*.txt |python select_generation.py |sed "s/ //g" |sed "s/▁/ /g" |sed "s/ – /–/g" |sed "s/ - /-/g" |sed "s/ — /—/g" |sed "s/ : /:/g" |sed "s/ \./\./g" |sed "s/ ,/,/g" |sed "s/( /(/g" |sed "s/ )/)/g" |cut -b2- > $TMP/$OUTPUT
-rm -rf $SESSION_DIR
+paste -d "\n" $SESSION_DIR/scoring_*.*.txt |python rank_generation.py |sed "s/ //g" |sed "s/▁/ /g" |sed "s/ – /–/g" |sed "s/ - /-/g" |sed "s/ — /—/g" |sed "s/ : /:/g" |sed "s/ \./\./g" |sed "s/ ,/,/g" |sed "s/( /(/g" |sed "s/ )/)/g" > $TMP/$OUTPUT
+#rm -rf $SESSION_DIR
