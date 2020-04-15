@@ -36,4 +36,4 @@ wait
 # Join candidates and select; detokenize
 echo "Writing final generation to $TMP/$OUTPUT"
 paste -d "\n" $SESSION_DIR/scoring_*.*.txt |python rank_generation.py |sed "s/ //g" |sed "s/▁/ /g" |sed "s/ – /–/g" |sed "s/ - /-/g" |sed "s/ — /—/g" |sed "s/ : /:/g" |sed "s/ \./\./g" |sed "s/ ,/,/g" |sed "s/( /(/g" |sed "s/ )/)/g" > $TMP/$OUTPUT
-#rm -rf $SESSION_DIR
+rm -rf $SESSION_DIR
